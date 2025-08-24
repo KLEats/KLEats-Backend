@@ -22,6 +22,7 @@ Services/         # External service integrations (mail, telegram, whatsapp, pay
 server.js         # Entry point
 package.json      # Project dependencies
 LICENSE           # License file
+```
 
 ## License
 This project is licensed under the terms of the GNU GENERAL PUBLIC LICENSE. See the LICENSE file for details.
