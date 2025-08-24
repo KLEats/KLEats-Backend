@@ -1,32 +1,25 @@
-const redis=require('../../Config/redisClint');
-const db=require('../../Config/mysqlDb.js');
-const itemRepo=require('../../Services/itemsServices/itemsCRUD.js');
+const redis = require('../../Config/redisClint');
+const db = require('../../Config/mysqlDb.js');
+const itemRepo = require('../../Services/itemsServices/itemsCRUD.js');
 const getKeyRedis = require('../../Services/Helper/GetKeysRedis.js');
-const fs=require('fs').promises;
-const path=require('path');
-const itemTime=process.env.redis_time_item;
-const cartTime=process.env.redis_time_cart;
+const fs = require('fs').promises;
+const path = require('path');
+const itemTime = process.env.redis_time_item;
+const cartTime = process.env.redis_time_cart;
 
-async function addToCart(req,res) {
+async function addToCart(req, res) {
 
-  try{
-<<<<<<< HEAD
-  const itemId = Number(req.query.id);
-  const quantity = Number(req.query.quantity);
-    const userId=req.payload.userId;
+  try {
+    const itemId = Number(req.query.id);
+    const quantity = Number(req.query.quantity);
+    const userId = req.payload.userId;
 
-  if (!itemId || !quantity || Number.isNaN(itemId) || Number.isNaN(quantity) || quantity <= 0) {
-=======
-    const itemId=req.query.id;
-    const quantity=req.query.quantity;
-    const userId=req.payload.userId;
+    if (!itemId || !quantity || Number.isNaN(itemId) || Number.isNaN(quantity) || quantity <= 0) {
 
-    if (!itemId || !quantity) {
->>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
       let missingParam = !itemId ? 'itemId' : 'quantity';
       return res.status(400).json({
-          code: 0,
-          message: `${missingParam} is missing. Please provide all required parameters.`
+        code: 0,
+        message: `${missingParam} is missing. Please provide all required parameters.`
       });
     }
 
@@ -35,13 +28,13 @@ async function addToCart(req,res) {
       redis.get(getKeyRedis('CanteenItem', itemId))
     ]);
 
-    if(!item){
+    if (!item) {
 
       try {
 
-        const itemData=await itemRepo.getItemById(itemId);
+        const itemData = await itemRepo.getItemById(itemId);
 
-        if(!itemData){
+        if (!itemData) {
           return res.status(404).json({
             code: 0,
             message: "Item not found."
@@ -54,44 +47,34 @@ async function addToCart(req,res) {
         return res.status(500).json({ code: -1, message: 'Internal server error.' });
       }
 
-    }else{
+    } else {
       item = JSON.parse(item);
     }
 
-    let {ava,startTime,endTime}=item;
-    const currentTime=new Date();
-    if(!ava){
-      return res.json({code:-1,message:`Item Id ${itemId} is currently unavailable.`});
+    let { ava, startTime, endTime } = item;
+    const currentTime = new Date();
+    if (!ava) {
+      return res.json({ code: -1, message: `Item Id ${itemId} is currently unavailable.` });
     }
-    
-    if(startTime&&endTime) {
-      let startTimef=new Date();
-      let endTimef=new Date();
-      
-      const [startHour,startMinute]=startTime.split(":" ).map(Number);
-      const [endHour,endMinute]=endTime.split(":" ).map(Number);
-      
+
+    if (startTime && endTime) {
+      let startTimef = new Date();
+      let endTimef = new Date();
+
+      const [startHour, startMinute] = startTime.split(":").map(Number);
+      const [endHour, endMinute] = endTime.split(":").map(Number);
+
       startTimef.setHours(startHour, startMinute, 0);
       endTimef.setHours(endHour, endMinute, 0);
-      
-      if(currentTime<startTimef||currentTime>endTimef){
-        return res.json({code:0,message:`Item ID ${itemId} is only available from ${startTime} to ${endTime}.`});
+
+      if (currentTime < startTimef || currentTime > endTimef) {
+        return res.json({ code: 0, message: `Item ID ${itemId} is only available from ${startTime} to ${endTime}.` });
       }
     }
 
-    if(cacheCart){
-      cacheCart=JSON.parse(cacheCart);
+    if (cacheCart) {
+      cacheCart = JSON.parse(cacheCart);
 
-<<<<<<< HEAD
-=======
-      if(cacheCart.cart.some(cartItem=>cartItem.itemId==itemId)){
-        return res.status(200).json({
-          code: 1,
-          message: 'Item added to cart successfully.'
-        });
-      }
-
->>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
       if (cacheCart.canteenId && cacheCart.canteenId !== item.canteenId) {
         return res.status(409).json({
           code: 0,
@@ -100,7 +83,6 @@ async function addToCart(req,res) {
       }
 
       cacheCart.cart = cacheCart.cart || [];
-<<<<<<< HEAD
       const idx = cacheCart.cart.findIndex(ci => Number(ci.itemId) === Number(itemId));
       if (idx >= 0) {
         const prevQ = Number(cacheCart.cart[idx].quantity || 0);
@@ -108,11 +90,9 @@ async function addToCart(req,res) {
       } else {
         cacheCart.cart.push({ itemId: itemId, quantity: quantity });
       }
-=======
-      cacheCart.cart.push({ itemId: itemId, quantity: quantity });
->>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 
-    }else{
+
+    } else {
       cacheCart = {
         canteenId: item.canteenId,
         cart: [{ itemId: itemId, quantity: quantity }]
@@ -126,30 +106,30 @@ async function addToCart(req,res) {
       message: 'Item added to cart successfully'
     });
 
-  }catch(err){
+  } catch (err) {
     console.log(err.message);
-    return res.status(500).json({code:-1,message:'Internal Server error'});
+    return res.status(500).json({ code: -1, message: 'Internal Server error' });
   }
 }
 
-async function removeFromCart(req,res) {
-  try{
-    const itemId=Number(req.query.id);
-    const userId=req.payload.userId;
+async function removeFromCart(req, res) {
+  try {
+    const itemId = Number(req.query.id);
+    const userId = req.payload.userId;
 
-    if(!itemId){
+    if (!itemId) {
       return res.status(400).json({
         code: 0,
         message: `ItemId is missing. Please provide all required parameters.`
       });
     }
 
-    let cacheCart=await redis.get(getKeyRedis('UserCart', userId));
-    if(!cacheCart){
-      return res.status(404).json({code:0,message:"cart data not found."});
+    let cacheCart = await redis.get(getKeyRedis('UserCart', userId));
+    if (!cacheCart) {
+      return res.status(404).json({ code: 0, message: "cart data not found." });
     }
 
-    cacheCart=JSON.parse(cacheCart);
+    cacheCart = JSON.parse(cacheCart);
 
     let itemFound = false;
     cacheCart.cart = cacheCart.cart.filter(item => {
@@ -178,45 +158,45 @@ async function removeFromCart(req,res) {
       message: "Item successfully removed from the cart.",
     });
 
-  }catch(err){
+  } catch (err) {
     console.log(err.message);
-    return res.status(500).json({code:-1,message:'Internal Server error'});
+    return res.status(500).json({ code: -1, message: 'Internal Server error' });
   }
 }
 
-async function clearCart(req,res) {
-  try{
-    const userId=req.payload.userId;
+async function clearCart(req, res) {
+  try {
+    const userId = req.payload.userId;
 
-    const cacheCart=await redis.get(getKeyRedis('UserCart', userId));
-    if(!cacheCart){
-      return res.status(404).json({code:0,message:"cart data not found."});
+    const cacheCart = await redis.get(getKeyRedis('UserCart', userId));
+    if (!cacheCart) {
+      return res.status(404).json({ code: 0, message: "cart data not found." });
     }
 
     await redis.del(getKeyRedis('UserCart', userId));
 
-    return res.status(200).json({code:1,message:"The cart has been cleared successfully."});
+    return res.status(200).json({ code: 1, message: "The cart has been cleared successfully." });
 
-  }catch(err){
+  } catch (err) {
     console.log(err.message);
-    return res.status(500).json({code:-1,message:'Internal Server error'});
+    return res.status(500).json({ code: -1, message: 'Internal Server error' });
   }
 }
 
-async function updateCart(req,res) {
-  
-  try{
-    const userId=req.payload.userId;
-    let obj=req.body;
+async function updateCart(req, res) {
 
-    let cacheCart=await redis.get(getKeyRedis('UserCart', userId));
-    if(!cacheCart){
-      return res.status(404).json({code:0,message:"cart data not found."});
-    }  
+  try {
+    const userId = req.payload.userId;
+    let obj = req.body;
 
-    cacheCart=JSON.parse(cacheCart);
-    if(cacheCart.canteenId==-9){
-      return res.json({code:0,message:'Cart is empty.'});
+    let cacheCart = await redis.get(getKeyRedis('UserCart', userId));
+    if (!cacheCart) {
+      return res.status(404).json({ code: 0, message: "cart data not found." });
+    }
+
+    cacheCart = JSON.parse(cacheCart);
+    if (cacheCart.canteenId == -9) {
+      return res.json({ code: 0, message: 'Cart is empty.' });
     }
 
     if (Object.keys(obj).length === 0) {
@@ -227,7 +207,6 @@ async function updateCart(req,res) {
     }
 
     if (!Array.isArray(obj)) {
-<<<<<<< HEAD
       obj = [obj];
     }
 
@@ -258,43 +237,11 @@ async function updateCart(req,res) {
 
     await redis.setex(getKeyRedis('UserCart', userId), cartTime, JSON.stringify(cacheCart));
 
-  return res.status(200).json({code:1,message:'Cart Updated Successfully.', errors: errors.length ? errors : undefined});
-=======
-      obj=[obj];
-    }
-    
-    let newCart=[];
-    let errors=[];
-    const cacheCartItems = new Set(cacheCart.cart.map(it => Number(it.itemId)));
+    return res.status(200).json({ code: 1, message: 'Cart Updated Successfully.', errors: errors.length ? errors : undefined });
 
-    for(let item of obj){
-      if(!item.itemId || typeof item.quantity!=='number'){
-        errors.push(`Invalid item data: ${JSON.stringify(item)}`);
-        continue;
-      }
-
-      if (item.quantity > 0) {
-        if(!cacheCartItems.has(item.itemId)) {
-            errors.push(`Item ID ${item.itemId} not found in the cart.`);
-        }
-        newCart.push(item);
-      }
-    }
-
-    if(errors.length>=1){
-      return res.status(400).json({code:0,message:"Errors in update request.",errors:errors});
-    }
-
-    cacheCart.cart=newCart;
-
-    await redis.setex(getKeyRedis('UserCart', userId), cartTime, JSON.stringify(cacheCart));
-
-    return res.status(200).json({code:1,message:'Cart Updated Successfully.'});
->>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
-    
-  }catch(err){
+  } catch (err) {
     console.error(err.message);
-    return res.status(500).json({code:-1,message:'Internal Server error'});
+    return res.status(500).json({ code: -1, message: 'Internal Server error' });
   }
 
 }
@@ -412,7 +359,7 @@ async function getCartItems(req, res) {
 }
 
 
-module.exports={
+module.exports = {
   addToCart,
   removeFromCart,
   clearCart,
