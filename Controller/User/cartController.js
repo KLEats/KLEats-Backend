@@ -10,11 +10,19 @@ const cartTime=process.env.redis_time_cart;
 async function addToCart(req,res) {
 
   try{
+<<<<<<< HEAD
   const itemId = Number(req.query.id);
   const quantity = Number(req.query.quantity);
     const userId=req.payload.userId;
 
   if (!itemId || !quantity || Number.isNaN(itemId) || Number.isNaN(quantity) || quantity <= 0) {
+=======
+    const itemId=req.query.id;
+    const quantity=req.query.quantity;
+    const userId=req.payload.userId;
+
+    if (!itemId || !quantity) {
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
       let missingParam = !itemId ? 'itemId' : 'quantity';
       return res.status(400).json({
           code: 0,
@@ -74,6 +82,16 @@ async function addToCart(req,res) {
     if(cacheCart){
       cacheCart=JSON.parse(cacheCart);
 
+<<<<<<< HEAD
+=======
+      if(cacheCart.cart.some(cartItem=>cartItem.itemId==itemId)){
+        return res.status(200).json({
+          code: 1,
+          message: 'Item added to cart successfully.'
+        });
+      }
+
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
       if (cacheCart.canteenId && cacheCart.canteenId !== item.canteenId) {
         return res.status(409).json({
           code: 0,
@@ -82,6 +100,7 @@ async function addToCart(req,res) {
       }
 
       cacheCart.cart = cacheCart.cart || [];
+<<<<<<< HEAD
       const idx = cacheCart.cart.findIndex(ci => Number(ci.itemId) === Number(itemId));
       if (idx >= 0) {
         const prevQ = Number(cacheCart.cart[idx].quantity || 0);
@@ -89,6 +108,9 @@ async function addToCart(req,res) {
       } else {
         cacheCart.cart.push({ itemId: itemId, quantity: quantity });
       }
+=======
+      cacheCart.cart.push({ itemId: itemId, quantity: quantity });
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 
     }else{
       cacheCart = {
@@ -205,6 +227,7 @@ async function updateCart(req,res) {
     }
 
     if (!Array.isArray(obj)) {
+<<<<<<< HEAD
       obj = [obj];
     }
 
@@ -236,6 +259,38 @@ async function updateCart(req,res) {
     await redis.setex(getKeyRedis('UserCart', userId), cartTime, JSON.stringify(cacheCart));
 
   return res.status(200).json({code:1,message:'Cart Updated Successfully.', errors: errors.length ? errors : undefined});
+=======
+      obj=[obj];
+    }
+    
+    let newCart=[];
+    let errors=[];
+    const cacheCartItems = new Set(cacheCart.cart.map(it => Number(it.itemId)));
+
+    for(let item of obj){
+      if(!item.itemId || typeof item.quantity!=='number'){
+        errors.push(`Invalid item data: ${JSON.stringify(item)}`);
+        continue;
+      }
+
+      if (item.quantity > 0) {
+        if(!cacheCartItems.has(item.itemId)) {
+            errors.push(`Item ID ${item.itemId} not found in the cart.`);
+        }
+        newCart.push(item);
+      }
+    }
+
+    if(errors.length>=1){
+      return res.status(400).json({code:0,message:"Errors in update request.",errors:errors});
+    }
+
+    cacheCart.cart=newCart;
+
+    await redis.setex(getKeyRedis('UserCart', userId), cartTime, JSON.stringify(cacheCart));
+
+    return res.status(200).json({code:1,message:'Cart Updated Successfully.'});
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
     
   }catch(err){
     console.error(err.message);

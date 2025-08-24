@@ -107,9 +107,15 @@ async function searchItems(req, res) {
 }
 
 async function getItemsByCanteen(req,res) {
+<<<<<<< HEAD
   const canteenId = req.query.canteen_id;
   const offset = Math.max(parseInt(req.query.offset || '0', 10), 0);
   const limit = Math.min(Math.max(parseInt(req.query.limit || '20', 10), 1), 50);
+=======
+  const canteenId=req.query.canteen_id;
+  const offset=Number(req.query.offset);
+  const limit=20;
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 
   if(!canteenId || isNaN(offset)){
     return res.json({code:0,message:'Invalid data.'});
@@ -124,8 +130,13 @@ async function getItemsByCanteen(req,res) {
 
     const itemsList=await itemRepo.getCanteenItemsIds(canteenId);
     const paginatedItems = itemsList.slice(offset, offset + limit);
+<<<<<<< HEAD
   const redisKeys = paginatedItems.map(id => getKeyRedis('CanteenItem', id));
   const cachedItems = redisKeys.length > 0 ? await redis.mget(redisKeys) : [];
+=======
+    const redisKeys = paginatedItems.map(id => getKeyRedis('CanteenItem',id));
+    const cachedItems = redisKeys.length > 0 ? await redis.mget(...redisKeys) : [];
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 
     let data = [];
 
@@ -135,14 +146,24 @@ async function getItemsByCanteen(req,res) {
       if (!cacheItem) {
         cacheItem = await itemRepo.getItemById(paginatedItems[i]);
 
+<<<<<<< HEAD
         if (!cacheItem || cacheItem.ava === false) {
+=======
+        if (!cacheItem || !cacheItem.ava) {
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
           continue;
         }
 
         await redis.setex(getKeyRedis('CanteenItem',paginatedItems[i]), itemTime, JSON.stringify(cacheItem));
       }
 
+<<<<<<< HEAD
       // Do not filter by time window here; include items with ava=true regardless of current time
+=======
+      if (isAvailableNow(cacheItem) === false) {
+        continue;
+      }
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 
       data.push(cacheItem);
     }
@@ -155,7 +176,11 @@ async function getItemsByCanteen(req,res) {
       data: data,
       meta: {
         offset,
+<<<<<<< HEAD
   limit,
+=======
+        limit,
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
         total,
         hasMore
       }

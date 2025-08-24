@@ -17,6 +17,7 @@ dotenv.config();
 
 const app = express();
 
+<<<<<<< HEAD
 // Import payment handlers early so we can wire webhook before parsers
 const { handlePaymentResponse, juspayWebhook, cashfreeWebhook } = require('./Controller/User/orderController');
 
@@ -24,6 +25,10 @@ const { handlePaymentResponse, juspayWebhook, cashfreeWebhook } = require('./Con
 app.use(express.static('public'));
 // Cashfree webhook MUST receive raw body for signature verification; register before JSON parsers
 app.post('/cashfree/webhook', express.raw({ type: '*/*' }), cashfreeWebhook);
+=======
+// Middleware
+app.use(express.static('public'));
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -118,7 +123,11 @@ app.use('/api/User/cart',verifyUserToken,UserCartRouter);
 
 // Payment response handler - no auth required as it's called by HDFC
 // IMPORTANT: Define these BEFORE the authenticated order routes
+<<<<<<< HEAD
 // Handlers already imported above
+=======
+const {handlePaymentResponse,juspayWebhook,cashfreeWebhook}=require('./Controller/User/orderController');
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 
 // Test endpoint to verify the route is accessible - outside order routes
 app.get('/api/test-payment', (req, res) => {
@@ -143,7 +152,12 @@ app.post('/api/User/order/handlePaymentResponse', (req, res, next) => {
 
 app.post('/juspay/webhook', juspayWebhook);
 
+<<<<<<< HEAD
 // Cashfree webhook is registered earlier before body parsers
+=======
+// Cashfree webhook (no auth) - use raw body for signature verification
+app.post('/cashfree/webhook', express.raw({ type: '*/*' }), cashfreeWebhook);
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 
 //User-Order
 const UserOrderRouter=require('./router/User/orderRouter');

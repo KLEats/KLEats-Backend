@@ -63,7 +63,11 @@ async function telegramWebhook(req, res) {
 
     if (action === 'DELIVERED') {
         await conn.query(
+<<<<<<< HEAD
       `UPDATE orders SET status='delivered', deliveryTime = NOW(), paymentStatus='DELIVERED' WHERE transactionId = ? AND canteenId = ?`,
+=======
+      `UPDATE orders SET status='delivered', deliveryTime = NOW() WHERE transactionId = ? AND canteenId = ?`,
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
           [transactionId, order.canteenId]
         );
       } else if (action === 'REFUND' || action === 'REFUNDED') {

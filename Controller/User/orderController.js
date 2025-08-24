@@ -10,11 +10,14 @@ const { json } = require("body-parser");
 const itemRepo=require('../../Services/itemsServices/itemsCRUD.js');
 const telegram = require('../../Services/telegram');
 
+<<<<<<< HEAD
 // FREECANE eligible categories (case-insensitive)
 const FREECANE_ELIGIBLE_CATEGORIES = new Set([
     'Starters', 'FriedRice', 'Pizza', 'Burgers', 'Lunch'
 ].map(s => String(s).toLowerCase()));
 
+=======
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 // Coupon utils
 function sanitizeCoupons(input) {
     if (!input) return [];
@@ -145,13 +148,17 @@ function computeTotalsFromList(itemsArray = [], { orderType = 'dinein', parcelPr
     const { hasGLUG, hasFREECANE } = getCouponEffects(coupons);
     const baseSubtotal = itemsTotal + (parcelPrice || packingCharge); // parcelPrice already persisted for pickup policy
     const platformFee = hasGLUG ? 0 : Math.ceil(baseSubtotal * 0.03);
+<<<<<<< HEAD
     // Note: freeCaneCount will be computed precisely (by eligible categories) where needed for messages.
     // Keep this as totalQty for backward compatibility in totals, but UI will use eligible count instead.
+=======
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
     const freeCaneCount = hasFREECANE ? totalQty : 0;
     const grandTotal = Math.round((baseSubtotal + platformFee) * 100) / 100;
     return { itemsTotal, totalQty, packingCharge: parcelPrice || packingCharge, platformFee, grandTotal, freeCaneCount, hasGLUG, hasFREECANE };
 }
 
+<<<<<<< HEAD
 // Compute FREECANE eligible count by hydrating items and checking category membership
 async function countEligibleFreeCane(itemsArray = []) {
     try {
@@ -172,6 +179,8 @@ async function countEligibleFreeCane(itemsArray = []) {
     } catch { return 0; }
 }
 
+=======
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
 const userOrderTime = process.env.redis_time_userorders;
 const itemTime = process.env.redis_time_item;
 
@@ -591,6 +600,7 @@ async function placeOrder(req, res) {
 async function cashfreeWebhook(req, res) {
     let conn;
     try {
+<<<<<<< HEAD
         // Obtain raw body in a robust way: Buffer (preferred), string, or reconstruct from object
         let rawBuf = null;
         let reconstructed = false;
@@ -613,10 +623,19 @@ async function cashfreeWebhook(req, res) {
 
         if (!secret) {
             console.warn('No Cashfree secret found (CASHFREE_WEBHOOK_SECRET/CASHFREE_SECRET); skipping signature verification');
+=======
+        const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || '');
+        const signature = req.headers['x-webhook-signature'] || req.headers['x-cf-signature'];
+        const secret = process.env.CASHFREE_WEBHOOK_SECRET;
+
+        if (!secret) {
+            console.warn('CASHFREE_WEBHOOK_SECRET not set; skipping signature verification');
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
         } else if (!signature) {
             console.error('Cashfree webhook missing signature');
             return res.status(400).send('Missing signature');
         } else {
+<<<<<<< HEAD
             // Per docs: HMAC-SHA256 of (timestamp + rawPayload), base64-encoded
             const signedPayload = Buffer.concat([Buffer.from(String(timestamp)), rawBuf]).toString('utf8');
             const expected = crypto.createHmac('sha256', secret).update(signedPayload).digest('base64');
@@ -624,10 +643,17 @@ async function cashfreeWebhook(req, res) {
             if (!valid) {
                 const reason = reconstructed ? ' (raw body reconstructed; proxy may have parsed JSON)' : '';
                 console.error('Cashfree webhook signature mismatch' + reason);
+=======
+            const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
+            const valid = crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(String(signature)));
+            if (!valid) {
+                console.error('Cashfree webhook signature mismatch');
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
                 return res.status(400).send('Invalid signature');
             }
         }
 
+<<<<<<< HEAD
         // Parse JSON safely
         let payload;
         try {
@@ -641,6 +667,11 @@ async function cashfreeWebhook(req, res) {
             || payload?.order_id
             || payload?.order?.order_id
             || payload?.orderId;
+=======
+        const payload = JSON.parse(rawBody.toString('utf8'));
+        console.log('Cashfree Webhook Payload:', payload);
+        const orderId = payload?.data?.order?.order_id || payload?.order_id || payload?.order?.order_id || payload?.orderId;
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
         if (!orderId) {
             console.error('Cashfree webhook: order_id missing in payload');
             return res.status(400).send('order_id missing');
@@ -684,9 +715,13 @@ async function cashfreeWebhook(req, res) {
                         const { itemsText } = await buildItemsSummary(list);
                         const couponsArr = safeParseJSON(coupons) || [];
                         const totals = computeTotalsFromList(list, { orderType, parcelPrice, coupons: couponsArr });
+<<<<<<< HEAD
                         const { hasFREECANE } = getCouponEffects(couponsArr);
                         const eligibleFree = hasFREECANE ? await countEligibleFreeCane(list) : 0;
                         const freebiesLine = eligibleFree > 0 ? `\n+ ${eligibleFree} x Sugarcane Juice — FREE` : '';
+=======
+                        const freebiesLine = totals.freeCaneCount > 0 ? `\n+ ${totals.freeCaneCount} x Sugarcane Juice — FREE` : '';
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
                         const couponsLine = (Array.isArray(couponsArr) && couponsArr.length) ? `\nCoupons: ${couponsArr.join(', ')}` : '';
                         const msgItems = `${itemsText}${freebiesLine}${couponsLine}`;
                         const simpleTime = formatTimeAMPM(deliveryTime);
@@ -845,9 +880,13 @@ async function juspayWebhook(req, res) {
                         const [urows] = await conn.query('SELECT name, email, phoneNo FROM users WHERE userId = ? LIMIT 1', [userId]);
                         name = (urows?.[0]?.name || urows?.[0]?.phoneNo || urows?.[0]?.email || '').toString();
                     } catch {}
+<<<<<<< HEAD
                     const { hasFREECANE } = getCouponEffects(couponsArr);
                     const eligibleFree = hasFREECANE ? await countEligibleFreeCane(list) : 0;
                     const freebiesLine = eligibleFree > 0 ? `\n+ ${eligibleFree} x Sugarcane Juice — FREE` : '';
+=======
+                    const freebiesLine = totals.freeCaneCount > 0 ? `\n+ ${totals.freeCaneCount} x Sugarcane Juice — FREE` : '';
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
                     const couponsLine = (Array.isArray(couponsArr) && couponsArr.length) ? `\nCoupons: ${couponsArr.join(', ')}` : '';
                     const msgItems = `${itemsText}${freebiesLine}${couponsLine}`;
                     const msg = formatTelegramMessage({ orderId, name, type: normalizeOrderType(orderType), time: simpleTime, itemsText: msgItems, total: totals.grandTotal });
@@ -947,9 +986,13 @@ async function cashfreeVerify(req, res) {
                         const { itemsText } = await buildItemsSummary(list);
                         const couponsArr = safeParseJSON(coupons) || [];
                         const totals = computeTotalsFromList(list, { orderType, parcelPrice, coupons: couponsArr });
+<<<<<<< HEAD
                         const { hasFREECANE } = getCouponEffects(couponsArr);
                         const eligibleFree = hasFREECANE ? await countEligibleFreeCane(list) : 0;
                         const freebiesLine = eligibleFree > 0 ? `\n+ ${eligibleFree} x Sugarcane Juice — FREE` : '';
+=======
+                        const freebiesLine = totals.freeCaneCount > 0 ? `\n+ ${totals.freeCaneCount} x Sugarcane Juice — FREE` : '';
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
                         const couponsLine = (Array.isArray(couponsArr) && couponsArr.length) ? `\nCoupons: ${couponsArr.join(', ')}` : '';
                         const msgItems = `${itemsText}${freebiesLine}${couponsLine}`;
                         const simpleTime = formatTimeAMPM(deliveryTime);
@@ -1034,7 +1077,11 @@ async function getOrders(req, res) {
                            userId, items, orderType, parcelPrice, paymentStatus,
                            COUNT(*) OVER() AS totalCount
                     FROM orders
+<<<<<<< HEAD
                     WHERE userId = ? AND paymentStatus in ('REFUNDED','CHARGED','DELIVERED')
+=======
+                    WHERE userId = ? AND paymentStatus in ('REFUNDED','CHARGED')
+>>>>>>> ce735365d6832a60de1ab0dcedab42e944a3684c
                     ORDER BY orderTime DESC
                     LIMIT ?, ?`,
                     [userId, orders.orders.length, limit]
